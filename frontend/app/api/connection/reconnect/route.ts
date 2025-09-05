@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 
 export async function POST() {
   try {
-    // Call our backend API instead of mock database
+    
     const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
     const response = await fetch(`${backendUrl}/api/connection/reconnect`, {
       method: 'POST',

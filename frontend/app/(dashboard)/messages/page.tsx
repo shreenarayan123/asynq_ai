@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
+import { io, Socket } from 'socket.io-client'
 
 export type ChatMessage = {
   id: string
@@ -21,55 +22,62 @@ const fetcher = async (url: string) => {
 }
 
 export default function MessagesPage() {
-  const { data, error } = useSWR<ChatMessage[]>("/api/messages", fetcher, { refreshInterval: 0 })
+  const { data, error } = useSWR<ChatMessage[]>("/api/messages", fetcher, {
+    refreshInterval: 30000, // Refresh every 30 seconds as backup
+    revalidateOnFocus: false, // Don't revalidate on focus since we have WebSocket
+  })
   const [query, setQuery] = useState("")
 
-  // WebSocket live updates (optional: NEXT_PUBLIC_WS_URL)
+  // Socket.IO live updates for real-time messages
   useEffect(() => {
-    const url = process.env.NEXT_PUBLIC_WS_URL
-    if (!url) {
-      // Demo: simulate an incoming message occasionally
-      const t = setInterval(() => {
-        globalMutate(
-          "/api/messages",
-          (prev: ChatMessage[] | undefined) => {
-            const next = prev ? [...prev] : []
-            next.push({
-              id: crypto.randomUUID(),
-              sender: "user",
-              text: "Hello from demo stream",
-              timestamp: new Date().toISOString(),
-              from: "+1234567890",
-            })
-            return next
-          },
-          false,
-        )
-      }, 15000)
-      return () => clearInterval(t)
+    const serverUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000'
+    let socket: Socket | null = null
+
+    const connectSocket = () => {
+      try {
+        socket = io(serverUrl, {
+          transports: ['websocket', 'polling'],
+          autoConnect: true,
+        })
+
+        socket.on('connect', () => {
+          console.log('Socket.IO connected')
+        })
+
+        socket.on('newMessage', (message: ChatMessage) => {
+          console.log('Received new message:', message)
+          globalMutate("/api/messages", (prev: ChatMessage[] | undefined) => {
+            const messages = prev ? [...prev] : []
+            // Avoid duplicates by checking if message already exists
+            const exists = messages.find(m => m.id === message.id)
+            if (exists) return messages
+            return [...messages, message].sort((a, b) => 
+              new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+            )
+          }, false)
+        })
+
+        socket.on('disconnect', (reason) => {
+          console.log('Socket.IO disconnected:', reason)
+          // Socket.IO will automatically try to reconnect
+        })
+
+        socket.on('connect_error', (error) => {
+          console.error('Socket.IO connection error:', error)
+        })
+
+      } catch (error) {
+        console.error('Failed to connect Socket.IO:', error)
+      }
     }
 
-    let ws: WebSocket | null = null
-    try {
-      ws = new WebSocket(url)
-      ws.onmessage = (evt) => {
-        try {
-          const payload = JSON.parse(evt.data)
-          if (payload?.type === "message") {
-            const msg = payload.data as ChatMessage
-            globalMutate("/api/messages", (prev: ChatMessage[] | undefined) => (prev ? [...prev, msg] : [msg]), false)
-          }
-        } catch {
-          // ignore malformed
-        }
-      }
-    } catch {
-      // ignore if cannot connect
-    }
+    connectSocket()
+
+    // Cleanup on unmount
     return () => {
-      try {
-        ws?.close()
-      } catch {}
+      if (socket) {
+        socket.disconnect()
+      }
     }
   }, [])
 

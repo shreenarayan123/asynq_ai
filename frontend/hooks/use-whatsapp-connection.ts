@@ -89,7 +89,7 @@ export function useWhatsAppConnection() {
         throw new Error('Failed to reconnect');
       }
       
-      // Give the backend a moment to clear the session and start reconnecting
+      
       await new Promise(resolve => setTimeout(resolve, 1000));
       await fetchConnectionStatus();
       return true;
@@ -113,7 +113,7 @@ export function useWhatsAppConnection() {
         throw new Error('Failed to reset QR code');
       }
       
-      // Give the backend a moment to clear the session
+      
       await new Promise(resolve => setTimeout(resolve, 1000));
       await fetchConnectionStatus();
       return true;
