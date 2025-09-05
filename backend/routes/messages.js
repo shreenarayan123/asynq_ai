@@ -1,14 +1,10 @@
-const express = require('express');
-const router = express.Router();
-const Message = require('../models/Message');
-const whatsappService = require('../services/whatsappService');
-const { v4: uuidv4 } = require('uuid');
+import express from 'express';
+import Message from '../models/Message.js';
+import * as whatsappService from '../services/whatsappService.js';
 
-/**
- * @route   GET /api/messages
- * @desc    Get all messages with pagination
- * @access  Public
- */
+const router = express.Router();
+
+
 router.get('/', async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -37,11 +33,6 @@ router.get('/', async (req, res) => {
   }
 });
 
-/**
- * @route   GET /api/messages/filter
- * @desc    Get filtered messages by phone number, date range, etc.
- * @access  Public
- */
 router.get('/filter', async (req, res) => {
   try {
     const { phone, startDate, endDate, sender } = req.query;
@@ -92,11 +83,6 @@ router.get('/filter', async (req, res) => {
   }
 });
 
-/**
- * @route   POST /api/messages/send
- * @desc    Send a message to a specific phone number
- * @access  Public
- */
 router.post('/send', async (req, res) => {
   try {
     const { to, text } = req.body;
@@ -105,7 +91,7 @@ router.post('/send', async (req, res) => {
       return res.status(400).json({ error: 'Phone number and message text are required' });
     }
     
-    // Ensure phone number is in correct format
+   
     const formattedPhone = to.includes('@c.us') ? to : `${to.replace(/[^0-9]/g, '')}@c.us`;
     
     const result = await whatsappService.sendMessage(formattedPhone, text);
@@ -121,4 +107,4 @@ router.post('/send', async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

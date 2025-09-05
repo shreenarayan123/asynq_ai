@@ -1,5 +1,6 @@
 {
   "name": "whatsapp-bot-backend",
+  "type": "module",
   "version": "1.0.0",
   "description": "WhatsApp Auto-Reply Bot Backend",
   "main": "server.js",

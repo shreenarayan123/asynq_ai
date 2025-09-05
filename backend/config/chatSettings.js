@@ -5,15 +5,20 @@ module.exports = {
         'Indie-Hacker Army',
         'Fag 101'
     ],
-    
-    // Users to ignore - bot won't respond to these users
-    ignoredUsers: [
-        'Abu Musaddiq'
-    ],
-    
-    // Default response when AI is not available
-    defaultFallbackResponse: "I understand your message. Would you like information about our services, pricing, or general help?",
-    
-    // Default response when message needs human attention
-    humanAttentionResponse: "I understand your message and I'll forward it to our team. In the meantime, is there anything specific I can help you with? For example, I can provide information about our services, pricing, or general assistance."
+
+   // Users to ignore - bot won't respond to these users
+   ignoredUsers: [
+       'Abu Musaddiq'
+   ],
+
+   // Default response when AI is not available
+   defaultFallbackResponse: "wait , i'll be back",
+
+   // Default response when message needs human attention
+   humanAttentionResponse: "wait ..i'll get back "
 };
+
+// CURRENT ISSUES
+// 1. ignoring every group , ignored groups not working well
+// 2. delay not working
+// 3. make like a person itself not the assistant

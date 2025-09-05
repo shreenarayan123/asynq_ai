@@ -1,13 +1,10 @@
-const express = require('express');
-const router = express.Router();
-const whatsappService = require('../services/whatsappService');
-const ConnectionLog = require('../models/ConnectionLog');
+import express from 'express';
+import * as whatsappService from '../services/whatsappService.js';
+import ConnectionLog from '../models/ConnectionLog.js';
 
-/**
- * @route   GET /api/connection
- * @desc    Get WhatsApp connection status
- * @access  Public
- */
+const router = express.Router();
+
+
 router.get('/', async (req, res) => {
   try {
     const status = whatsappService.getConnectionStatus();
@@ -18,11 +15,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-/**
- * @route   POST /api/connection/reconnect
- * @desc    Reconnect to WhatsApp
- * @access  Public
- */
+
 router.post('/reconnect', async (req, res) => {
   try {
     const { forceNewQR = false } = req.body;
@@ -41,11 +34,7 @@ router.post('/reconnect', async (req, res) => {
   }
 });
 
-/**
- * @route   POST /api/connection/reset
- * @desc    Force new QR code generation
- * @access  Public
- */
+
 router.post('/reset', async (req, res) => {
   try {
     // Clear the session and force new QR code
@@ -64,11 +53,7 @@ router.post('/reset', async (req, res) => {
   }
 });
 
-/**
- * @route   GET /api/connection/logs
- * @desc    Get connection logs
- * @access  Public
- */
+
 router.get('/logs', async (req, res) => {
   try {
     const limit = parseInt(req.query.limit) || 10;
@@ -84,4 +69,4 @@ router.get('/logs', async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

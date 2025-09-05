@@ -1,12 +1,9 @@
-const express = require('express');
-const router = express.Router();
-const ruleService = require('../services/ruleService');
+import express from 'express';
+import * as ruleService from '../services/ruleService.js';
 
-/**
- * @route   GET /api/rules
- * @desc    Get all rules
- * @access  Public
- */
+const router = express.Router();
+
+
 router.get('/', async (req, res) => {
   try {
     const rules = await ruleService.getAllRules();
@@ -17,11 +14,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-/**
- * @route   GET /api/rules/:id
- * @desc    Get a single rule by ID
- * @access  Public
- */
+
 router.get('/:id', async (req, res) => {
   try {
     const rule = await ruleService.getRuleById(req.params.id);
@@ -37,11 +30,7 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-/**
- * @route   POST /api/rules
- * @desc    Create a new rule
- * @access  Public
- */
+
 router.post('/', async (req, res) => {
   try {
     const { keyword, response, isActive, matchType, caseSensitive, priority } = req.body;
@@ -66,11 +55,7 @@ router.post('/', async (req, res) => {
   }
 });
 
-/**
- * @route   PUT /api/rules/:id
- * @desc    Update an existing rule
- * @access  Public
- */
+
 router.put('/:id', async (req, res) => {
   try {
     const { keyword, response, isActive, matchType, caseSensitive, priority } = req.body;
@@ -95,11 +80,7 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-/**
- * @route   DELETE /api/rules/:id
- * @desc    Delete a rule
- * @access  Public
- */
+
 router.delete('/:id', async (req, res) => {
   try {
     const success = await ruleService.deleteRule(req.params.id);
@@ -115,4 +96,4 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

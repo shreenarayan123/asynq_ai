@@ -1,4 +1,48 @@
-const Message = require('../models/Message');
+import Message from '../models/Message.js';
+
+/**
+ * Check if a string contains only emojis
+ */
+const isOnlyEmojis = (text) => {
+  const emojiRegex = /^[\p{Extended_Pictographic}\u{1F3FB}-\u{1F3FF}\u{1F9B0}-\u{1F9B3}]+$/u;
+  return emojiRegex.test(text.trim());
+};
+
+/**
+ * Check if a string contains any emojis
+ */
+const containsEmoji = (text) => {
+  const emojiRegex = /[\p{Extended_Pictographic}\u{1F3FB}-\u{1F3FF}\u{1F9B0}-\u{1F9B3}]/u;
+  return emojiRegex.test(text);
+};
+
+/**
+ * Get the type of message for different handling
+ */
+const getMessageType = (text) => {
+  const normalizedText = text.trim().toLowerCase();
+  
+  if (isOnlyEmojis(text)) {
+    return 'emoji_only';
+  }
+  
+  if (normalizedText.length <= 5) {
+    return 'short_text';
+  }
+  
+  if (containsEmoji(text)) {
+    return 'text_with_emoji';
+  }
+  
+  return 'regular_text';
+};
+
+/**
+ * Clean and normalize message text
+ */
+const normalizeMessage = (text) => {
+  return text.trim();
+};
 
 /**
  * Save a message while handling potential duplicates
@@ -48,7 +92,11 @@ const updateMessageReply = async (messageId, replyId) => {
   }
 };
 
-module.exports = {
+export {
   saveMessage,
-  updateMessageReply
+  updateMessageReply,
+  isOnlyEmojis,
+  containsEmoji,
+  getMessageType,
+  normalizeMessage
 };

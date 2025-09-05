@@ -1,8 +1,8 @@
-const { v4: uuidv4 } = require('uuid');
-const Rule = require('../models/Rule');
+import { v4 as uuidv4 } from 'uuid';
+import Rule from '../models/Rule.js';
 
 /**
- * Find all rules
+ * Get all rules
  */
 const getAllRules = async () => {
   try {
@@ -14,7 +14,7 @@ const getAllRules = async () => {
 };
 
 /**
- * Find rule by ID
+ * Get rule by ID
  */
 const getRuleById = async (ruleId) => {
   try {
@@ -34,14 +34,10 @@ const createRule = async (ruleData) => {
       id: uuidv4(),
       keyword: ruleData.keyword,
       response: ruleData.response,
-      isActive: ruleData.isActive !== undefined ? ruleData.isActive : true,
-      matchType: ruleData.matchType || 'contains',
-      caseSensitive: ruleData.caseSensitive || false,
-      priority: ruleData.priority || 0
+      isActive: ruleData.isActive ?? true,
+      matchType: ruleData.matchType || 'contains'
     };
-    
-    const rule = new Rule(newRule);
-    return await rule.save();
+    return await new Rule(newRule).save();
   } catch (error) {
     console.error('Error creating rule:', error);
     throw error;
@@ -49,83 +45,45 @@ const createRule = async (ruleData) => {
 };
 
 /**
- * Update an existing rule
+ * Update rule
  */
 const updateRule = async (ruleId, ruleData) => {
   try {
     const rule = await Rule.findOne({ id: ruleId });
-    
-    if (!rule) {
-      return null;
-    }
-    
-    // Update only provided fields
-    if (ruleData.keyword !== undefined) rule.keyword = ruleData.keyword;
-    if (ruleData.response !== undefined) rule.response = ruleData.response;
-    if (ruleData.isActive !== undefined) rule.isActive = ruleData.isActive;
-    if (ruleData.matchType !== undefined) rule.matchType = ruleData.matchType;
-    if (ruleData.caseSensitive !== undefined) rule.caseSensitive = ruleData.caseSensitive;
-    if (ruleData.priority !== undefined) rule.priority = ruleData.priority;
-    
+    if (!rule) return null;
+
+    Object.assign(rule, ruleData);
     return await rule.save();
   } catch (error) {
-    console.error(`Error updating rule with ID ${ruleId}:`, error);
+    console.error(`Error updating rule ${ruleId}:`, error);
     throw error;
   }
 };
 
 /**
- * Delete a rule
+ * Delete rule
  */
 const deleteRule = async (ruleId) => {
   try {
     const result = await Rule.deleteOne({ id: ruleId });
     return result.deletedCount > 0;
   } catch (error) {
-    console.error(`Error deleting rule with ID ${ruleId}:`, error);
+    console.error(`Error deleting rule ${ruleId}:`, error);
     throw error;
   }
 };
 
 /**
- * Find a rule that matches the message
+ * Find matching rule for a message
  */
 const findMatchingRule = async (message) => {
   try {
-    console.log(`Finding rule match for message: "${message}"`);
-    
-    // Get all active rules sorted by priority
     const rules = await Rule.find({ isActive: true }).sort({ priority: -1 });
-    console.log(`Found ${rules.length} active rules to check against`);
-    
-    if (rules.length === 0) {
-      console.log('No rules found in database! Creating default rules...');
+    if (!rules.length) {
       await createDefaultRules();
-      // Try again with the newly created rules
-      const newRules = await Rule.find({ isActive: true }).sort({ priority: -1 });
-      console.log(`Created default rules, now have ${newRules.length} rules`);
-      
-      // Test each new rule against the message
-      for (const rule of newRules) {
-        console.log(`Testing rule: "${rule.keyword}" (${rule.matchType})`);
-        if (doesRuleMatch(rule, message)) {
-          console.log(`Rule matched: "${rule.keyword}" -> "${rule.response}"`);
-          return rule;
-        }
-      }
-    } else {
-      // Test each rule against the message
-      for (const rule of rules) {
-        console.log(`Testing rule: "${rule.keyword}" (${rule.matchType})`);
-        if (doesRuleMatch(rule, message)) {
-          console.log(`Rule matched: "${rule.keyword}" -> "${rule.response}"`);
-          return rule;
-        }
-      }
+      return findMatchingRule(message);
     }
-    
-    console.log('No matching rule found');
-    return null;
+    return rules.find(rule => doesRuleMatch(rule, message)) || null;
   } catch (error) {
     console.error('Error finding matching rule:', error);
     return null;
@@ -133,120 +91,57 @@ const findMatchingRule = async (message) => {
 };
 
 /**
- * Create default rules if none exist
+ * Create default rules
  */
 const createDefaultRules = async () => {
-  try {
-    // Default rules for common queries
-    const defaultRules = [
-      {
-        keyword: 'hello',
-        response: 'Hello! How can I assist you today?',
-        isActive: true,
-        matchType: 'contains',
-        caseSensitive: false,
-        priority: 5
-      },
-      {
-        keyword: 'hi',
-        response: 'Hi there! How may I help you?',
-        isActive: true,
-        matchType: 'contains',
-        caseSensitive: false,
-        priority: 5
-      },
-      {
-        keyword: 'pricing',
-        response: 'Our pricing starts at $10/month for basic plan. For more details, please visit our website or contact our sales team.',
-        isActive: true,
-        matchType: 'contains',
-        caseSensitive: false,
-        priority: 10
-      },
-      {
-        keyword: 'help',
-        response: 'I can help you with information about our services, pricing, support, or answer general questions. Just let me know what you need!',
-        isActive: true,
-        matchType: 'contains',
-        caseSensitive: false,
-        priority: 5
-      }
-    ];
-    
-    // Create each default rule
-    for (const ruleData of defaultRules) {
-      await createRule(ruleData);
-      console.log(`Created default rule for keyword: "${ruleData.keyword}"`);
-    }
-    
-    return true;
-  } catch (error) {
-    console.error('Error creating default rules:', error);
-    return false;
+  const defaults = [
+    { keyword: 'hello', response: 'Hii bro' },
+    { keyword: 'hi', response: 'Hola' },
+    { keyword: 'pricing', response: 'Our pricing starts at $10/month.' },
+    { keyword: 'help', response: 'for what' }
+  ];
+  for (const data of defaults) {
+    await createRule({ ...data, isActive: true, matchType: 'contains' });
   }
 };
 
 /**
- * Test if a rule matches the message text
+ * Check if rule matches message
  */
 const doesRuleMatch = (rule, message) => {
-  const keyword = rule.keyword;
   const text = rule.caseSensitive ? message : message.toLowerCase();
-  const matchKeyword = rule.caseSensitive ? keyword : keyword.toLowerCase();
-  
-  let matches = false;
+  const keyword = rule.caseSensitive ? rule.keyword : rule.keyword.toLowerCase();
+
   switch (rule.matchType) {
-    case 'exact':
-      matches = text === matchKeyword;
-      console.log(`Exact match test: "${text}" === "${matchKeyword}" => ${matches}`);
-      return matches;
-    case 'contains':
-      matches = text.includes(matchKeyword);
-      console.log(`Contains test: "${text}" includes "${matchKeyword}" => ${matches}`);
-      return matches;
-    case 'starts_with':
-      matches = text.startsWith(matchKeyword);
-      console.log(`Starts with test: "${text}" startsWith "${matchKeyword}" => ${matches}`);
-      return matches;
-    case 'ends_with':
-      matches = text.endsWith(matchKeyword);
-      console.log(`Ends with test: "${text}" endsWith "${matchKeyword}" => ${matches}`);
-      return matches;
+    case 'exact': return text === keyword;
+    case 'contains': return text.includes(keyword);
+    case 'starts_with': return text.startsWith(keyword);
+    case 'ends_with': return text.endsWith(keyword);
     case 'regex':
       try {
-        const regex = new RegExp(matchKeyword, rule.caseSensitive ? '' : 'i');
-        matches = regex.test(text);
-        console.log(`Regex test: /${matchKeyword}/${rule.caseSensitive ? '' : 'i'} against "${text}" => ${matches}`);
-        return matches;
-      } catch (err) {
-        console.error('Invalid regex pattern:', err);
+        return new RegExp(keyword, rule.caseSensitive ? '' : 'i').test(text);
+      } catch {
         return false;
       }
-    default:
-      matches = text.includes(matchKeyword);
-      console.log(`Default (contains) test: "${text}" includes "${matchKeyword}" => ${matches}`);
-      return matches;
+    default: return text.includes(keyword);
   }
 };
 
 /**
- * Update rule usage statistics
+ * Update rule usage stats
  */
 const updateRuleUsage = async (ruleId) => {
   try {
     await Rule.updateOne(
       { id: ruleId },
-      {
-        $inc: { usageCount: 1 },
-        $set: { lastUsed: new Date() }
-      }
+      { $inc: { usageCount: 1 }, $set: { lastUsed: new Date() } }
     );
   } catch (error) {
     console.error(`Error updating usage for rule ${ruleId}:`, error);
   }
 };
 
-module.exports = {
+export {
   getAllRules,
   getRuleById,
   createRule,

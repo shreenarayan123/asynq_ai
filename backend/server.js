@@ -1,30 +1,34 @@
-const express = require('express');
-const cors = require('cors');
-const helmet = require('helmet');
-const rateLimit = require('express-rate-limit');
-const { createServer } = require('http');
-const { Server } = require('socket.io');
-require('dotenv').config();
+import express from 'express';
+import cors from 'cors';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
+import { createServer } from 'http';
+import { Server } from 'socket.io';
+import dotenv from 'dotenv';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
 
-const connectDB = require('./config/database');
-const whatsappService = require('./services/whatsappService');
-const aiService = require('./services/aiService');
-const { initializeSettings, setupCleanupTasks } = require('./utils/dbInit');
-const { errorHandler, notFound } = require('./middleware/errorMiddleware');
-const corsMiddleware = require('./middleware/corsMiddleware');
+import connectDB from './config/database.js';
+import * as whatsappService from './services/whatsappService.js';
+import * as aiService from './services/aiService.js';
 
 // Routes
-const connectionRoutes = require('./routes/connection');
-const messagesRoutes = require('./routes/messages');
-const rulesRoutes = require('./routes/rules');
-const settingsRoutes = require('./routes/settings');
+import connectionRoutes from './routes/connection.js';
+import messagesRoutes from './routes/messages.js';
+import rulesRoutes from './routes/rules.js';
+import settingsRoutes from './routes/settings.js';
+
+dotenv.config();
+
+// ES Module support for __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const app = express();
 const server = createServer(app);
 const io = new Server(server, {
   cors: {
     origin: process.env.FRONTEND_URL || "http://localhost:3000",
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     credentials: true,
     allowedHeaders: ["Content-Type", "Authorization"]
   },
@@ -39,11 +43,6 @@ const PORT = process.env.PORT || 5000;
 (async () => {
   await connectDB();
   
-  // Initialize default settings
-  await initializeSettings();
-  
-  // Setup cleanup tasks
-  await setupCleanupTasks();
 })();
 
 // Middleware
@@ -54,7 +53,7 @@ app.use(cors({
   origin: process.env.FRONTEND_URL || "http://localhost:3000",
   credentials: true
 }));
-app.use(corsMiddleware);
+app.use(cors());
 
 // Rate limiting
 const limiter = rateLimit({
@@ -128,10 +127,6 @@ io.on('connection', (socket) => {
   });
 });
 
-// Error handling middleware
-app.use(notFound);
-app.use(errorHandler);
-
 // Graceful shutdown
 process.on('SIGTERM', async () => {
   console.log('SIGTERM received, shutting down gracefully...');
@@ -156,4 +151,4 @@ server.listen(PORT, () => {
   console.log(`Environment: ${process.env.NODE_ENV}`);
 });
 
-module.exports = { app, server, io };
+export { app, server, io };

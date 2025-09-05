@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const ruleSchema = new mongoose.Schema({
   id: {
@@ -23,22 +23,6 @@ const ruleSchema = new mongoose.Schema({
     type: String,
     enum: ['exact', 'contains', 'starts_with', 'ends_with', 'regex'],
     default: 'contains'
-  },
-  caseSensitive: {
-    type: Boolean,
-    default: false
-  },
-  priority: {
-    type: Number,
-    default: 0
-  },
-  usageCount: {
-    type: Number,
-    default: 0
-  },
-  lastUsed: {
-    type: Date,
-    default: null
   }
 }, {
   timestamps: true
@@ -48,4 +32,4 @@ const ruleSchema = new mongoose.Schema({
 ruleSchema.index({ keyword: 1 });
 ruleSchema.index({ isActive: 1, priority: -1 });
 
-module.exports = mongoose.model('Rule', ruleSchema);
+export default mongoose.model('Rule', ruleSchema);
