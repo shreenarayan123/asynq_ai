@@ -1,27 +1,59 @@
 "use client"
 
-import useSWR from "swr"
+import { useState } from "react"
+import { useWhatsAppConnection } from "@/hooks/use-whatsapp-connection"
 import { cn } from "@/lib/utils"
-
-const fetcher = async (url: string) => {
-  const res = await fetch(url)
-  if (!res.ok) throw new Error("Failed to fetch")
-  return res.json()
-}
+import { Button } from "@/components/ui/button"
+import { useToast } from "@/hooks/use-toast"
 
 export function ConnectionIndicator() {
-  const { data } = useSWR<{ status: "connected" | "disconnected" }>("/api/connection", fetcher, {
-    refreshInterval: 5000,
-  })
-  const status = data?.status || "disconnected"
-  const isUp = status === "connected"
+  const { connectionStatus, resetQR } = useWhatsAppConnection()
+  const { toast } = useToast()
+  const isUp = connectionStatus.status === "connected"
+  const [isResetting, setIsResetting] = useState(false)
+
+  const handleReset = async () => {
+    try {
+      setIsResetting(true)
+      const success = await resetQR();
+      if (success) {
+        toast({
+          title: "Connection Reset",
+          description: "Generating new QR code, please wait...",
+        });
+      } else {
+        throw new Error('Failed to reset connection');
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to reset connection",
+        variant: "destructive",
+      });
+    } finally {
+      setIsResetting(false)
+    }
+  };
+
   return (
-    <div className="flex items-center gap-2" aria-live="polite">
-      <span
-        className={cn("inline-block h-2.5 w-2.5 rounded-full", isUp ? "bg-green-600" : "bg-gray-300")}
-        aria-hidden
-      />
-      <span className="text-sm">{isUp ? "Connected" : "Disconnected"}</span>
+    <div className="flex items-center gap-4" aria-live="polite">
+      <div className="flex items-center gap-2">
+        <span
+          className={cn("inline-block h-2.5 w-2.5 rounded-full", isUp ? "bg-green-600" : "bg-gray-300")}
+          aria-hidden
+        />
+        <span className="text-sm">{isUp ? "Connected" : "Disconnected"}</span>
+      </div>
+      {!connectionStatus.qr && (
+        <Button 
+          variant="outline" 
+          size="sm"
+          onClick={handleReset}
+          className="h-7 px-2"
+        >
+          ↻ Reset QR
+        </Button>
+      )}
     </div>
   )
 }
