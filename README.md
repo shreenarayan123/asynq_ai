@@ -1,4 +1,4 @@
-# WhatsApp Auto-Reply Bot
+# Brew ( WhatsApp Auto-Reply Bot )
 
 A WhatsApp Auto-Reply Bot with a web dashboard that automatically responds to incoming messages using rule-based responses and AI.
 
