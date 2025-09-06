@@ -89,12 +89,6 @@ export default function ConnectionPage() {
                         height={256}
                         className="bg-white transition-transform group-hover:scale-105"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-green-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                      <div className="absolute bottom-2 left-2 right-2">
-                        <div className="bg-green-600/90 backdrop-blur-sm text-white text-xs font-medium px-3 py-1 rounded-full text-center">
-                          ✨ Ready to scan!
-                        </div>
-                      </div>
                     </div>
                   ) : (
                     <div className="h-64 w-64 rounded-xl bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-700 flex flex-col items-center justify-center border-2 border-slate-200 dark:border-slate-600">
